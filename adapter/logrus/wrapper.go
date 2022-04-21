@@ -1,8 +1,9 @@
 package logrus
 
 import (
+	"context"
 	"github.com/IIA-Micro-Service/go-log/adapter"
-	"github.com/IIA-Micro-Service/go-log/tracer"
+	"github.com/IIA-Micro-Service/go-log/adapter/logrus/hook"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
@@ -22,11 +23,17 @@ import (
  * logrus的wrapper
  */
 type logrusWrapper struct {
-	handler        *logrus.Logger // logrus对象句柄
-	tracerProvider trace.TracerProvider
-	tracer         trace.Tracer // tracer对象
+	handler *logrus.Logger // logrus对象句柄
+	//tracerProvider trace.TracerProvider
+	//tracer         trace.Tracer // tracer对象
 }
 
+func (lw *logrusWrapper) WithContext(ctx context.Context) adapter.Logger {
+	//lw.handler.WithContext()
+	return newLogrusEntryWrapper(lw.handler.WithContext(ctx))
+}
+
+/*
 func (lw *logrusWrapper) GetTracerProvider() trace.TracerProvider {
 	//return lw.handler.WithField(key, value)
 	//return newLogrusEntryWrapper(lw.handler.WithField(key, value))
@@ -37,6 +44,7 @@ func (lw *logrusWrapper) GetTracer() trace.Tracer {
 	//return newLogrusEntryWrapper(lw.handler.WithField(key, value))
 	return lw.tracer
 }
+*/
 func (lw *logrusWrapper) WithField(key string, value interface{}) adapter.Logger {
 	//return lw.handler.WithField(key, value)
 	return newLogrusEntryWrapper(lw.handler.WithField(key, value))
@@ -92,9 +100,25 @@ func (lw *logrusWrapper) Panicf(format string, args ...interface{}) {
  * logrus.Entry的wrapper
  */
 type logrusEntryWrapper struct {
-	entryHandler *logrus.Entry
+	entryHandler   *logrus.Entry
+	tracerProvider trace.TracerProvider
+	tracer         trace.Tracer // tracer对象
 }
 
+func (lew *logrusEntryWrapper) WithContext(ctx context.Context) adapter.Logger {
+	//lew.entryHandler.WithContext(ctx)
+	return newLogrusEntryWrapper(lew.entryHandler.WithContext(ctx))
+}
+func (lew *logrusEntryWrapper) GetTracerProvider() trace.TracerProvider {
+	//return lw.handler.WithField(key, value)
+	//return newLogrusEntryWrapper(lw.handler.WithField(key, value))
+	return lew.tracerProvider
+}
+func (lew *logrusEntryWrapper) GetTracer() trace.Tracer {
+	//return lw.handler.WithField(key, value)
+	//return newLogrusEntryWrapper(lw.handler.WithField(key, value))
+	return lew.tracer
+}
 func (lew *logrusEntryWrapper) WithField(key string, value interface{}) adapter.Logger {
 	//return lew.entryHandler.WithField(key, value)
 	return newLogrusEntryWrapper(lew.entryHandler.WithField(key, value))
@@ -187,6 +211,7 @@ func NewLogrusWrapper() *logrusWrapper {
 	//logger.SetOutput(writer)
 	//logger.Hooks.Add(lfsHook)
 	logrusHandler.SetLevel(logrus.InfoLevel)
+	logrusHandler.AddHook(hook.NewTracerHook())
 	logrusHandler.AddHook(lfsHook)
 
 	/*
@@ -195,12 +220,7 @@ func NewLogrusWrapper() *logrusWrapper {
 		})
 	*/
 
-	// 再初始化Log组件的同时，去初始化Opentelemetry组件
-	globalTracerProvider, globalTracer := tracer.NewTracerWrapper()
-
 	return &logrusWrapper{
-		handler:        logrusHandler,
-		tracerProvider: globalTracerProvider,
-		tracer:         globalTracer,
+		handler: logrusHandler,
 	}
 }

@@ -1,10 +1,17 @@
 package adapter
 
+import (
+	"context"
+)
+
 /*
  * @desc : 先定义好interface抽象接口，其他所有的三方开源组件都必须遵守并实现该接口
  */
 type Fields map[string]interface{}
 type Logger interface {
+	WithContext(ctx context.Context) Logger
+	//GetTracerProvider() trace.TracerProvider
+	//GetTracer() trace.Tracer
 	WithField(key string, value interface{}) Logger
 	WithFields(fields Fields) Logger
 	Trace(args ...interface{})

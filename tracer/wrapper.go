@@ -1,7 +1,6 @@
 package tracer
 
 import (
-	"context"
 	"fmt"
 	"go.opentelemetry.io/otel"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
@@ -14,6 +13,13 @@ import (
 
 var globalTracerProvider *sdktrace.TracerProvider
 var globalTracer trace.Tracer
+
+func GetGlobalTracerProvider() *sdktrace.TracerProvider {
+	return globalTracerProvider
+}
+func GetGlobalTracer() trace.Tracer {
+	return globalTracer
+}
 
 /*
  * @desc : 初始化一个exporter
@@ -51,10 +57,6 @@ func NewTracerWrapper() (*sdktrace.TracerProvider, trace.Tracer) {
 	//stdout.
 	//tracer = tp.Tracer("ExampleService")
 	globalTracer = globalTracerProvider.Tracer("example")
-
-	_, span := globalTracer.Start(context.Background(), "example-span")
-	//fmt.Printf("%+v\n", ctx)
-	defer span.End()
 
 	//fmt.Printf("%+v", span.SpanContext())
 	return globalTracerProvider, globalTracer
