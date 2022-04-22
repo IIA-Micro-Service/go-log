@@ -10,5 +10,5 @@ type Config struct {
 	LogFileName  string        // 日志文件名称
 	MaxLife      time.Duration // 日志最长存活时间
 	RotationTime time.Duration // 日志分割周期
-	LogLevel     uint8         // 日志等级
+	LogLevel     uint32        // 日志等级
 }

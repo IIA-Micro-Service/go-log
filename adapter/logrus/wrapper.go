@@ -4,11 +4,13 @@ import (
 	"context"
 	"github.com/IIA-Micro-Service/go-log/adapter"
 	"github.com/IIA-Micro-Service/go-log/adapter/logrus/hook"
+	"github.com/IIA-Micro-Service/go-log/config"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/trace"
 	"io/ioutil"
+	"log"
 	"time"
 )
 
@@ -179,40 +181,44 @@ func newLogrusEntryWrapper(entry *logrus.Entry) *logrusEntryWrapper {
 	}
 }
 
-func NewLogrusWrapper() *logrusWrapper {
+func NewLogrusWrapper(config *config.Config) *logrusWrapper {
 
 	// 日志文件
-	logFile := "./logrus.log"
+	logFile := config.LogDir + config.LogFileName
 	//logFileHandler, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	//if err != nil {}
 
-	writer, err := rotatelogs.New(
+	// 配置日志轮换
+	rotateWriter, err := rotatelogs.New(
 		logFile+".%Y%m%d",
-		rotatelogs.WithLinkName(logFile),                              // 生成软链，指向最新日志文件
-		rotatelogs.WithMaxAge(time.Duration(86400*7)*time.Second),     // 文件最大保存时间
-		rotatelogs.WithRotationTime(time.Duration(86400)*time.Second), // 日志切割时间间隔
+		rotatelogs.WithLinkName(logFile), // 生成软链，指向最新日志文件
+		rotatelogs.WithMaxAge(time.Duration(config.MaxLife)*time.Second),            // 文件最大保存时间
+		rotatelogs.WithRotationTime(time.Duration(config.RotationTime)*time.Second), // 日志切割时间间隔
 	)
 	if err != nil {
+		log.Fatalf("rotatelogs.New err: %+v", err)
 	}
 
-	lfsHook := lfshook.NewHook(lfshook.WriterMap{
-		logrus.TraceLevel: writer,
-		logrus.DebugLevel: writer,
-		logrus.InfoLevel:  writer,
-		logrus.WarnLevel:  writer,
-		logrus.ErrorLevel: writer,
-		logrus.FatalLevel: writer,
-		logrus.PanicLevel: writer,
+	// 通过hook方式，将rotateWriter hook到logrus上去
+	rotateWriterHook := lfshook.NewHook(lfshook.WriterMap{
+		logrus.TraceLevel: rotateWriter,
+		logrus.DebugLevel: rotateWriter,
+		logrus.InfoLevel:  rotateWriter,
+		logrus.WarnLevel:  rotateWriter,
+		logrus.ErrorLevel: rotateWriter,
+		logrus.FatalLevel: rotateWriter,
+		logrus.PanicLevel: rotateWriter,
 	}, &logrus.JSONFormatter{})
 
 	logrusHandler := logrus.New()
 	//logger.Out = ioutil.Discard
+	// 关闭logrus日志在屏幕stdout上的输出
 	logrusHandler.SetOutput(ioutil.Discard)
 	//logger.SetOutput(writer)
 	//logger.Hooks.Add(lfsHook)
-	logrusHandler.SetLevel(logrus.InfoLevel)
+	logrusHandler.SetLevel(logrus.Level(config.LogLevel))
 	logrusHandler.AddHook(hook.NewTracerHook())
-	logrusHandler.AddHook(lfsHook)
+	logrusHandler.AddHook(rotateWriterHook)
 
 	/*
 		logrusHandler.WithFields(logrus.Fields{

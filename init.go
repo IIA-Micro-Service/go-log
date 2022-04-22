@@ -14,7 +14,7 @@ func Init(config *config.Config) adapter.Logger {
 	}
 
 	if "logrus" == config.Type {
-		loggerHandler = loggerAdapter.NewLogrusWrapper()
+		loggerHandler = loggerAdapter.NewLogrusWrapper(config)
 	}
 
 	// 再初始化Log组件的同时，去初始化Opentelemetry组件

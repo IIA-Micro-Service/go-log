@@ -4,6 +4,16 @@ import (
 	"context"
 )
 
+const (
+	PanicLevel uint32 = iota
+	FatalLevel
+	ErrorLevel
+	WarnLevel
+	InfoLevel
+	DebugLevel
+	TraceLevel
+)
+
 /*
  * @desc : 先定义好interface抽象接口，其他所有的三方开源组件都必须遵守并实现该接口
  */

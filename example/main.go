@@ -6,7 +6,6 @@ import (
 	"github.com/IIA-Micro-Service/go-log/adapter"
 	"github.com/IIA-Micro-Service/go-log/config"
 	"github.com/IIA-Micro-Service/go-log/tracer"
-	"time"
 )
 
 func main() {
@@ -15,8 +14,9 @@ func main() {
 		Type:         "logrus",
 		LogDir:       "./",
 		LogFileName:  "logrus.log",
-		MaxLife:      time.Duration(7*86400) * time.Second,
-		RotationTime: time.Duration(1*86400) * time.Second,
+		MaxLife:      7 * 86400,
+		RotationTime: 1 * 86400,
+		LogLevel:     adapter.TraceLevel,
 	}
 	loggerHandler := log.Init(logConfig)
 
