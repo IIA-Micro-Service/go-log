@@ -3,6 +3,7 @@ module github.com/IIA-Micro-Service/go-log
 go 1.16
 
 require (
+	github.com/iia-micro-service/go-grpc v0.0.0-20220418142105-9ef5b0f106ad // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
